@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historia Clínica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --teal-900:#6b4552;
+    --teal-700:#9c6b7c;
+    --teal-500:#c98aa0;
+    --teal-100:#f7ecf0;
+    --sand-50:#f8f5f2;
+    --clay-500:#a85a72;
+    --ink-900:#33282b;
+    --line:#e7dade;
+    --danger:#b3462c;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+    background:var(--sand-50);
+    color:var(--ink-900);
+    line-height:1.5;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 0 80px;}
+
+  header.top{
+    background:linear-gradient(135deg,var(--teal-900),var(--teal-700));
+    color:#fff;
+    padding:28px 24px 90px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; right:-60px; top:-60px;
+    width:220px;height:220px;border-radius:50%;
+    background:rgba(255,255,255,0.06);
+  }
+  .brand-row{display:flex;align-items:center;gap:18px;position:relative;z-index:1;}
+  .logo-box{
+    width:132px;height:76px;border-radius:12px;
+    background:var(--sand-50);
+    border:1.5px solid rgba(255,255,255,0.5);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;overflow:hidden;
+    font-size:11px;text-align:center;color:rgba(255,255,255,0.85);
+    box-shadow:0 2px 8px rgba(0,0,0,0.12);
+    padding:6px;
+  }
+  .logo-box img{width:100%;height:100%;object-fit:contain;}
+  header.top h1{margin:0;font-size:1.7rem;letter-spacing:.2px;}
+  header.top p{margin:4px 0 0;opacity:.85;font-size:.95rem;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin:-56px 20px 22px;
+    padding:24px 24px 8px;
+    position:relative;
+    z-index:2;
+    box-shadow:0 1px 3px rgba(13,59,59,0.06);
+  }
+  .card + .card{margin-top:22px;}
+  section.card{margin-left:20px;margin-right:20px;}
+
+  .sec-title{
+    display:flex;align-items:baseline;gap:10px;
+    margin:0 0 18px;
+    padding-bottom:10px;
+    border-bottom:2px solid var(--teal-100);
+  }
+  .sec-title .num{
+    font-family:Georgia,serif;font-size:1.3rem;color:var(--clay-500);font-weight:700;
+  }
+  .sec-title h2{font-size:1.05rem;margin:0;color:var(--teal-900);text-transform:uppercase;letter-spacing:.6px;}
+  .sub-title{font-size:.92rem;font-weight:700;color:var(--teal-700);margin:22px 0 10px;padding-top:14px;border-top:1px dashed var(--line);}
+  .sub-title:first-of-type{border-top:none;padding-top:0;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin-bottom:18px;}
+  .grid.g3{grid-template-columns:1fr 1fr 1fr;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .field.full{grid-column:1/-1;}
+  label{font-size:.82rem;font-weight:600;color:var(--teal-900);}
+  input[type=text],input[type=number],input[type=tel],input[type=email],
+  input[type=date],select,textarea{
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:9px 11px;
+    font-size:.94rem;
+    font-family:inherit;
+    background:#fdfefe;
+    color:var(--ink-900);
+  }
+  input:focus,select:focus,textarea:focus{
+    outline:2px solid var(--teal-500);outline-offset:1px;border-color:var(--teal-500);
+  }
+  textarea{resize:vertical;min-height:64px;}
+
+  .choice-group{display:flex;flex-wrap:wrap;gap:10px 20px;}
+  .choice-group label{
+    display:flex;align-items:center;gap:7px;font-weight:400;font-size:.92rem;color:var(--ink-900);
+    cursor:pointer;
+  }
+  .choice-group input{accent-color:var(--teal-500);width:16px;height:16px;}
+
+  .range-row{display:flex;align-items:center;gap:14px;}
+  input[type=range]{flex:1;accent-color:var(--clay-500);}
+  .range-val{
+    min-width:32px;text-align:center;font-weight:700;color:var(--clay-500);
+    border:1.5px solid var(--clay-500);border-radius:6px;padding:2px 0;font-size:.9rem;
+  }
+
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:6px;}
+  .photo-slot{
+    border:1.5px dashed var(--line);border-radius:var(--radius);
+    padding:10px;text-align:center;
+    background:var(--teal-100);
+    transition:border-color .15s;
+  }
+  .photo-slot:hover{border-color:var(--teal-500);}
+  .photo-actions{display:flex;gap:6px;margin-top:8px;}
+  .photo-btn{
+    flex:1;padding:7px 4px;font-size:.78rem;font-weight:600;cursor:pointer;
+    background:#fff;color:var(--teal-700);border:1px solid var(--line);border-radius:6px;
+  }
+  .photo-btn:hover{background:var(--teal-100);border-color:var(--teal-500);}
+  .photo-slot .ph-label{font-size:.78rem;font-weight:600;color:var(--teal-700);margin-bottom:8px;display:block;}
+  .photo-slot img{width:100%;height:110px;object-fit:cover;border-radius:6px;display:none;}
+  .photo-slot .placeholder{
+    height:110px;display:flex;align-items:center;justify-content:center;
+    color:#8aa39d;font-size:1.6rem;
+  }
+
+  .consent-box{
+    background:var(--teal-100);border-left:4px solid var(--teal-500);
+    border-radius:0 8px 8px 0;padding:16px 18px;font-size:.9rem;color:var(--teal-900);
+  }
+  .consent-check{margin-top:14px;display:flex;gap:10px;align-items:flex-start;font-weight:600;}
+  .consent-check input{margin-top:3px;width:17px;height:17px;accent-color:var(--teal-500);}
+
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .sig-box{text-align:center;}
+  canvas.sigpad{
+    width:100%;height:160px;border:1.5px solid var(--line);border-radius:8px;
+    background:#fff;touch-action:none;cursor:crosshair;
+  }
+  .sig-btn{
+    margin-top:8px;background:none;border:1px solid var(--line);color:var(--teal-700);
+    padding:6px 14px;border-radius:6px;font-size:.82rem;cursor:pointer;
+  }
+  .sig-btn:hover{background:var(--teal-100);}
+
+  .actions{display:flex;gap:14px;padding:8px 20px 0;flex-wrap:wrap;}
+  .btn{
+    flex:1;min-width:220px;padding:15px 20px;border:none;border-radius:9px;
+    font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.2px;
+  }
+  .btn-primary{background:var(--clay-500);color:#fff;}
+  .btn-primary:hover{background:#a8582f;}
+  .btn-secondary{background:#fff;color:var(--teal-700);border:1.5px solid var(--line);}
+  .btn-secondary:hover{background:var(--teal-100);}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--teal-900);color:#fff;padding:12px 22px;border-radius:8px;
+    font-size:.9rem;opacity:0;pointer-events:none;transition:all .25s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:640px){
+    .grid,.grid.g3{grid-template-columns:1fr;}
+    .photo-grid{grid-template-columns:1fr 1fr;}
+    .sig-grid{grid-template-columns:1fr;}
+    .card{margin-left:12px;margin-right:12px;padding:20px 16px 4px;}
+    header.top{padding:22px 16px 80px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand-row">
+      <div class="logo-box" id="logoBox" title="Clic para cambiar el logotipo">
+        <span id="logoPlaceholder" style="display:none;">Logo<br>clínica</span>
+        <img id="logoImg" alt="Logo LoveFoot Podología" src="data:image/jpeg;base64,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">
+      </div>
+      <input type="file" id="logoInput" accept="image/*" hidden>
+      <div>
+        <h1>Historia Clínica</h1>
+        <p>Expediente de valoración, exploración y plan de tratamiento</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <form id="clinicalForm">
+
+    <!-- 1 Especialista -->
+    <section class="card">
+      <div class="sec-title"><span class="num">01</span><h2>Información del especialista</h2></div>
+      <div class="grid">
+        <div class="field">
+          <label>Nombre del especialista</label>
+          <select name="esp_nombre" id="espNombreSelect">
+            <option value="">Seleccione</option>
+            <option>Laura Castillo Chávez</option>
+            <option>Laura Elena</option>
+            <option>Alejandro Michalek</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field" id="espNombreOtroField" style="display:none;">
+          <label>Especifique el nombre</label>
+          <input type="text" name="esp_nombre_otro" id="espNombreOtro">
+        </div>
+        <div class="field">
+          <label>Especialidad</label>
+          <select name="esp_especialidad" id="espEspecialidadSelect">
+            <option value="">Seleccione</option>
+            <option>Podología</option><option>Enfermería</option>
+            <option>Fisioterapia</option><option>Manicuría</option>
+            <option>Cosmetología</option><option>Estética capilar</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field" id="espEspecialidadOtroField" style="display:none;">
+          <label>Especifique la especialidad</label>
+          <input type="text" name="esp_especialidad_otro" id="espEspecialidadOtro">
+        </div>
+        <div class="field">
+          <label>Clínica / Centro de salud</label>
+          <select name="esp_clinica" id="espClinicaSelect">
+            <option value="">Seleccione</option>
+            <option>LoveFoot</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field" id="espClinicaOtroField" style="display:none;">
+          <label>Especifique la clínica / centro</label>
+          <input type="text" name="esp_clinica_otro" id="espClinicaOtro">
+        </div>
+        <div class="field"><label>Fecha de valoración</label><input type="date" name="esp_fecha"></div>
+        <div class="field"><label>Teléfono de contacto</label><input type="tel" name="esp_telefono"></div>
+        <div class="field"><label>Correo de contacto</label><input type="email" name="esp_correo"></div>
+      </div>
+    </section>
+
+    <!-- 2 Paciente -->
+    <section class="card">
+      <div class="sec-title"><span class="num">02</span><h2>Datos del paciente</h2></div>
+      <div class="grid">
+        <div class="field full"><label>Nombre completo</label><input type="text" name="pac_nombre"></div>
+        <div class="field"><label>Edad</label><input type="number" min="0" name="pac_edad"></div>
+        <div class="field">
+          <label>Sexo</label>
+          <div class="choice-group">
+            <label><input type="radio" name="pac_sexo" value="Masculino">Masculino</label>
+            <label><input type="radio" name="pac_sexo" value="Femenino">Femenino</label>
+            <label><input type="radio" name="pac_sexo" value="Otro">Otro</label>
+          </div>
+        </div>
+        <div class="field"><label>Teléfono</label><input type="tel" name="pac_telefono"></div>
+        <div class="field"><label>Ocupación</label><input type="text" name="pac_ocupacion"></div>
+        <div class="field full"><label>Domicilio</label><input type="text" name="pac_domicilio"></div>
+      </div>
+    </section>
+
+    <!-- 3 Antecedentes -->
+    <section class="card">
+      <div class="sec-title"><span class="num">03</span><h2>Antecedentes podológicos y médicos</h2></div>
+      <div class="field full">
+        <label>Condiciones relevantes</label>
+        <div class="choice-group" id="condiciones">
+          <label><input type="checkbox" value="Diabetes Mellitus">Diabetes Mellitus</label>
+          <label><input type="checkbox" value="Hipertensión arterial">Hipertensión arterial</label>
+          <label><input type="checkbox" value="Problemas vasculares">Problemas vasculares</label>
+          <label><input type="checkbox" value="Pie plano / pie cavo">Pie plano / pie cavo</label>
+          <label><input type="checkbox" value="Antecedentes de onicomicosis">Antecedentes de onicomicosis</label>
+          <label><input type="checkbox" value="Cirugías previas podológicas">Cirugías previas podológicas</label>
+          <label><input type="checkbox" value="Traumatismos en miembros inferiores">Traumatismos en miembros inferiores</label>
+          <label><input type="checkbox" value="Otros">Otros</label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Tratamiento médico actual (si aplica: DM / crónicas)</label>
+        <select name="ant_tratamiento">
+          <option value="">Seleccione</option>
+          <option>Insulina</option><option>Hipoglucemiantes Orales</option>
+          <option>Dieta y Ejercicio</option><option>Fármacos Vasculares</option><option>Otro</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- 4 Estilo de vida -->
+    <section class="card">
+      <div class="sec-title"><span class="num">04</span><h2>Estilo de vida y hábitos</h2></div>
+      <div class="grid">
+        <div class="field">
+          <label>Actividad física</label>
+          <div class="choice-group">
+            <label><input type="radio" name="vida_actividad" value="Sedentario">Sedentario</label>
+            <label><input type="radio" name="vida_actividad" value="Leve">Leve</label>
+            <label><input type="radio" name="vida_actividad" value="Moderada">Moderada</label>
+            <label><input type="radio" name="vida_actividad" value="Intensa">Intensa</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tipo de calzado habitual</label>
+          <select name="vida_calzado">
+            <option value="">Seleccione</option>
+            <option>Deportivo</option><option>Casual (Cerrado)</option><option>Formal</option>
+            <option>Sandalias / Abierto</option><option>Ortopédico / Especial</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field"><label>Frecuencia de caminata (tiempo / distancia)</label><input type="text" name="vida_caminata"></div>
+        <div class="field">
+          <label>Adherencia a indicaciones médicas</label>
+          <select name="vida_adherencia">
+            <option value="">Seleccione</option><option>Buena</option><option>Regular</option><option>Mala</option>
+          </select>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Hábitos tóxicos</label>
+        <div class="choice-group">
+          <label><input type="checkbox" value="Tabaquismo">Tabaquismo</label>
+          <label><input type="checkbox" value="Alcohol">Alcohol</label>
+          <label><input type="checkbox" value="Otros (drogas)">Otros (drogas)</label>
+          <label><input type="checkbox" value="Ninguno">Ninguno</label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Nivel de estrés percibido (1–10)</label>
+        <div class="range-row">
+          <input type="range" min="1" max="10" value="5" id="stressRange">
+          <span class="range-val" id="stressVal">5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 Exploración clínica -->
+    <section class="card">
+      <div class="sec-title"><span class="num">05</span><h2>Exploración clínica podológica</h2></div>
+
+      <div class="sub-title">Evaluación podológica específica</div>
+      <div class="field full">
+        <label>Uñas</label>
+        <div class="choice-group">
+          <label><input type="checkbox" value="Sanas">Sanas</label>
+          <label><input type="checkbox" value="Onicomicosis">Onicomicosis</label>
+          <label><input type="checkbox" value="Onicogrifosis">Onicogrifosis</label>
+          <label><input type="checkbox" value="Onicocriptosis (Uña encarnada)">Onicocriptosis (Uña encarnada)</label>
+          <label><input type="checkbox" value="Onicólisis">Onicólisis</label>
+          <label><input type="checkbox" value="Hiperqueratosis ungueal">Hiperqueratosis ungueal</label>
+          <label><input type="checkbox" value="Paroniquia">Paroniquia</label>
+          <label><input type="checkbox" value="Candidiasis ungueal">Candidiasis ungueal</label>
+          <label><input type="checkbox" value="Traumatismos">Traumatismos</label>
+          <label><input type="checkbox" value="Hematomas subungueales">Hematomas subungueales</label>
+          <label><input type="checkbox" value="Onicorrexis">Onicorrexis</label>
+          <label><input type="checkbox" value="Onicosquisis">Onicosquisis</label>
+          <label><input type="checkbox" value="Onicausis">Onicausis</label>
+          <label><input type="checkbox" value="Macroniquia">Macroniquia</label>
+          <label><input type="checkbox" value="Microniquia">Microniquia</label>
+          <label><input type="checkbox" value="Anoniquia">Anoniquia</label>
+          <label><input type="checkbox" value="Verrugas ungueales">Verrugas ungueales</label>
+          <label style="gap:8px;"><input type="checkbox" value="Otros" id="unasOtrosCheck">Otros
+            <input type="text" name="unas_otros_texto" id="unasOtrosTexto" placeholder="Especifique" style="width:160px;padding:5px 8px;">
+          </label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Piel y tegumentos</label>
+        <div class="choice-group">
+          <label><input type="checkbox" value="Sana">Sana</label>
+          <label><input type="checkbox" value="Hiperqueratosis (Callosidad)">Hiperqueratosis (Callosidad)</label>
+          <label><input type="checkbox" value="Maceración interdigital">Maceración interdigital</label>
+          <label><input type="checkbox" value="Verrugas plantares">Verrugas plantares</label>
+          <label><input type="checkbox" value="Eccemas/dermatitis">Eccemas/dermatitis</label>
+          <label><input type="checkbox" value="Grietas/Fisuras">Grietas/Fisuras</label>
+          <label><input type="checkbox" value="Heridas/Úlceras">Heridas/Úlceras</label>
+          <label><input type="checkbox" value="Otros">Otros</label>
+        </div>
+      </div>
+
+      <div class="sub-title">Evaluación biomecánica y vascular/neurológica</div>
+      <div class="grid">
+        <div class="field">
+          <label>Marcha y postura</label>
+          <select name="exp_marcha">
+            <option value="">Seleccione</option>
+            <option>Normal</option><option>Pronadora</option><option>Supinadora</option>
+            <option>Claudicación</option><option>Marcha Antálgica</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Exploración vascular (pulsos)</label>
+          <select name="exp_pulsos">
+            <option value="">Seleccione</option><option>Normal</option><option>Disminuidos</option><option>Ausentes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Llenado capilar</label>
+          <select name="exp_llenado">
+            <option value="">Seleccione</option>
+            <option>Normal (&lt; 2 seg)</option><option>Retardado (2-3 seg)</option><option>Muy Retardado (&gt; 3 seg)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Temperatura del pie</label>
+          <select name="exp_temperatura">
+            <option value="">Seleccione</option>
+            <option>Normal</option><option>Caliente (Signo de inflamación)</option><option>Frío (Signo de isquemia)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Exploración neurológica básica</label>
+          <select name="exp_neuro">
+            <option value="">Seleccione</option>
+            <option>Sensibilidad Conservada</option><option>Disminución Sensibilidad (Monofilamento/Diapasón)</option>
+            <option>Ausencia Sensibilidad</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lado(s) afectado(s)</label>
+          <select name="exp_lado">
+            <option value="">Seleccione</option>
+            <option>N/A</option><option>Pie Izquierdo</option><option>Pie Derecho</option><option>Ambos Pies</option>
+          </select>
+        </div>
+      </div>
+      <div class="field full"><label>Observaciones adicionales de la exploración</label><textarea name="exp_observaciones"></textarea></div>
+    </section>
+
+    <!-- 6 Exploración clínica de manos -->
+    <section class="card">
+      <div class="sec-title"><span class="num">06</span><h2>Exploración clínica de manos</h2></div>
+
+      <div class="sub-title">Evaluación específica de manos</div>
+      <div class="field full">
+        <label>Uñas</label>
+        <div class="choice-group">
+          <label><input type="checkbox" value="Sanas">Sanas</label>
+          <label><input type="checkbox" value="Onicomicosis">Onicomicosis</label>
+          <label><input type="checkbox" value="Onicogrifosis">Onicogrifosis</label>
+          <label><input type="checkbox" value="Onicocriptosis (Uña encarnada)">Onicocriptosis (Uña encarnada)</label>
+          <label><input type="checkbox" value="Onicólisis">Onicólisis</label>
+          <label><input type="checkbox" value="Hiperqueratosis ungueal">Hiperqueratosis ungueal</label>
+          <label><input type="checkbox" value="Paroniquia">Paroniquia</label>
+          <label><input type="checkbox" value="Candidiasis ungueal">Candidiasis ungueal</label>
+          <label><input type="checkbox" value="Traumatismos">Traumatismos</label>
+          <label><input type="checkbox" value="Hematomas subungueales">Hematomas subungueales</label>
+          <label><input type="checkbox" value="Onicorrexis">Onicorrexis</label>
+          <label><input type="checkbox" value="Onicosquisis">Onicosquisis</label>
+          <label><input type="checkbox" value="Onicausis">Onicausis</label>
+          <label><input type="checkbox" value="Macroniquia">Macroniquia</label>
+          <label><input type="checkbox" value="Microniquia">Microniquia</label>
+          <label><input type="checkbox" value="Anoniquia">Anoniquia</label>
+          <label><input type="checkbox" value="Verrugas ungueales">Verrugas ungueales</label>
+          <label style="gap:8px;"><input type="checkbox" value="Otros" id="unasManosOtrosCheck">Otros
+            <input type="text" name="unas_otros_texto_manos" id="unasManosOtrosTexto" placeholder="Especifique" style="width:160px;padding:5px 8px;">
+          </label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Piel y tegumentos</label>
+        <div class="choice-group">
+          <label><input type="checkbox" value="Sana">Sana</label>
+          <label><input type="checkbox" value="Hiperqueratosis (Callosidad)">Hiperqueratosis (Callosidad)</label>
+          <label><input type="checkbox" value="Maceración interdigital">Maceración interdigital</label>
+          <label><input type="checkbox" value="Verrugas palmares">Verrugas palmares</label>
+          <label><input type="checkbox" value="Eccemas/dermatitis">Eccemas/dermatitis</label>
+          <label><input type="checkbox" value="Grietas/Fisuras">Grietas/Fisuras</label>
+          <label><input type="checkbox" value="Heridas/Úlceras">Heridas/Úlceras</label>
+          <label><input type="checkbox" value="Otros">Otros</label>
+        </div>
+      </div>
+
+      <div class="sub-title">Evaluación biomecánica y vascular/neurológica</div>
+      <div class="grid">
+        <div class="field">
+          <label>Exploración vascular (pulsos)</label>
+          <select name="exp_pulsos_manos">
+            <option value="">Seleccione</option><option>Normal</option><option>Disminuidos</option><option>Ausentes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Llenado capilar</label>
+          <select name="exp_llenado_manos">
+            <option value="">Seleccione</option>
+            <option>Normal (&lt; 2 seg)</option><option>Retardado (2-3 seg)</option><option>Muy Retardado (&gt; 3 seg)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Temperatura de la mano</label>
+          <select name="exp_temperatura_manos">
+            <option value="">Seleccione</option>
+            <option>Normal</option><option>Caliente (Signo de inflamación)</option><option>Frío (Signo de isquemia)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Exploración neurológica básica</label>
+          <select name="exp_neuro_manos">
+            <option value="">Seleccione</option>
+            <option>Sensibilidad Conservada</option><option>Disminución Sensibilidad (Monofilamento/Diapasón)</option>
+            <option>Ausencia Sensibilidad</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lado(s) afectado(s)</label>
+          <select name="exp_lado_manos">
+            <option value="">Seleccione</option>
+            <option>N/A</option><option>Mano Izquierda</option><option>Mano Derecha</option><option>Ambas Manos</option>
+          </select>
+        </div>
+      </div>
+      <div class="field full"><label>Observaciones adicionales de la exploración</label><textarea name="exp_observaciones_manos"></textarea></div>
+    </section>
+
+    <!-- 7 Plan -->
+    <section class="card">
+      <div class="sec-title"><span class="num">07</span><h2>Plan de tratamiento sugerido</h2></div>
+      <div class="field full"><label>Indicaciones de higiene del pie</label><textarea name="plan_higiene"></textarea></div>
+      <div class="field full"><label>Corte y cuidado de uñas</label><textarea name="plan_unas"></textarea></div>
+      <div class="field full"><label>Tratamientos antimicóticos (si aplica)</label><textarea name="plan_antimicotico"></textarea></div>
+      <div class="field full"><label>Órtesis plantares / calzado especial (si aplica)</label><textarea name="plan_ortesis"></textarea></div>
+      <div class="field full"><label>Seguimiento podológico (próxima cita)</label><input type="date" name="plan_seguimiento"></div>
+    </section>
+
+    <!-- 8 Fotografía -->
+    <section class="card">
+      <div class="sec-title"><span class="num">08</span><h2>Fotografía clínica</h2></div>
+      <div class="photo-grid">
+        <div class="photo-slot" data-slot="1">
+          <span class="ph-label">Vista general / lesión principal</span>
+          <div class="placeholder">📷</div>
+          <img alt="Imagen clínica 1">
+          <div class="photo-actions">
+            <button type="button" class="photo-btn" data-source="camera">📷 Cámara</button>
+            <button type="button" class="photo-btn" data-source="gallery">🖼️ Galería</button>
+          </div>
+        </div>
+        <div class="photo-slot" data-slot="2">
+          <span class="ph-label">Detalle uñas / planta / lateral</span>
+          <div class="placeholder">📷</div>
+          <img alt="Imagen clínica 2">
+          <div class="photo-actions">
+            <button type="button" class="photo-btn" data-source="camera">📷 Cámara</button>
+            <button type="button" class="photo-btn" data-source="gallery">🖼️ Galería</button>
+          </div>
+        </div>
+        <div class="photo-slot" data-slot="3">
+          <span class="ph-label">Detalle estructura / biomecánica</span>
+          <div class="placeholder">📷</div>
+          <img alt="Imagen clínica 3">
+          <div class="photo-actions">
+            <button type="button" class="photo-btn" data-source="camera">📷 Cámara</button>
+            <button type="button" class="photo-btn" data-source="gallery">🖼️ Galería</button>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="photoInputGallery" accept="image/*" hidden>
+      <input type="file" id="photoInputCamera" accept="image/*" capture="environment" hidden>
+      <div class="field full"><label>Comentarios sobre las fotografías</label><textarea name="foto_comentarios"></textarea></div>
+    </section>
+
+    <!-- 9 Consentimiento -->
+    <section class="card">
+      <div class="sec-title"><span class="num">09</span><h2>Consentimiento informado</h2></div>
+      <div class="consent-box">
+        Otorgo mi consentimiento para la valoración, diagnóstico y tratamiento podológico por parte del profesional sanitario.
+        Entiendo que el proceso incluye la exploración de mis pies y la toma de fotografías clínicas, las cuales se usarán
+        para mi expediente y seguimiento. He recibido explicaciones sobre mi condición y el plan de tratamiento sugerido,
+        y mis dudas han sido resueltas. Acepto los riesgos y beneficios de los procedimientos.
+      </div>
+      <label class="consent-check">
+        <input type="checkbox" id="consentCheck">
+        He leído y acepto el consentimiento informado.
+      </label>
+    </section>
+
+    <!-- 10 Firmas -->
+    <section class="card">
+      <div class="sec-title"><span class="num">10</span><h2>Firmas de conformidad</h2></div>
+      <div class="sig-grid">
+        <div class="sig-box">
+          <label>Firma del paciente o responsable</label>
+          <canvas class="sigpad" id="sigPaciente"></canvas>
+          <button type="button" class="sig-btn" data-clear="sigPaciente">Limpiar</button>
+        </div>
+        <div class="sig-box">
+          <label>Firma del profesional tratante</label>
+          <canvas class="sigpad" id="sigProfesional"></canvas>
+          <button type="button" class="sig-btn" data-clear="sigProfesional">Limpiar</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btnGenerar">Generar reporte clínico podológico</button>
+      <button type="button" class="btn btn-secondary" id="btnReset">Reiniciar formulario</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Utilidades ---------- */
+const toast = (msg) => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+};
+
+const compressImage = (file, maxDim, quality) => new Promise((resolve) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > height && width > maxDim) { height *= maxDim / width; width = maxDim; }
+      else if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ---------- Logo ---------- */
+const logoBox = document.getElementById('logoBox');
+const logoInput = document.getElementById('logoInput');
+const logoImg = document.getElementById('logoImg');
+const logoPlaceholder = document.getElementById('logoPlaceholder');
+const defaultLogoData = logoImg.getAttribute('src');
+let logoData = defaultLogoData;
+logoBox.addEventListener('click', () => logoInput.click());
+logoInput.addEventListener('change', async () => {
+  const f = logoInput.files[0];
+  if (!f) return;
+  logoData = await compressImage(f, 300, 0.85);
+  logoImg.src = logoData;
+  logoImg.style.display = 'block';
+  logoPlaceholder.style.display = 'none';
+});
+
+/* ---------- Fotos clínicas ---------- */
+const photoInputGallery = document.getElementById('photoInputGallery');
+const photoInputCamera = document.getElementById('photoInputCamera');
+const photoData = { 1: null, 2: null, 3: null };
+let activeSlot = null;
+document.querySelectorAll('.photo-slot').forEach(slot => {
+  slot.querySelectorAll('.photo-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeSlot = slot.dataset.slot;
+      (btn.dataset.source === 'camera' ? photoInputCamera : photoInputGallery).click();
+    });
+  });
+});
+async function handlePhotoSelected(input) {
+  const f = input.files[0];
+  if (!f || !activeSlot) return;
+  const data = await compressImage(f, 900, 0.82);
+  photoData[activeSlot] = data;
+  const slot = document.querySelector(`.photo-slot[data-slot="${activeSlot}"]`);
+  const img = slot.querySelector('img');
+  img.src = data;
+  img.style.display = 'block';
+  slot.querySelector('.placeholder').style.display = 'none';
+  input.value = '';
+}
+photoInputGallery.addEventListener('change', () => handlePhotoSelected(photoInputGallery));
+photoInputCamera.addEventListener('change', () => handlePhotoSelected(photoInputCamera));
+
+/* ---------- Slider de estrés ---------- */
+const stressRange = document.getElementById('stressRange');
+const stressVal = document.getElementById('stressVal');
+stressRange.addEventListener('input', () => stressVal.textContent = stressRange.value);
+
+/* ---------- Nombre del especialista: campo "Otro" ---------- */
+const espNombreSelect = document.getElementById('espNombreSelect');
+const espNombreOtroField = document.getElementById('espNombreOtroField');
+const espNombreOtro = document.getElementById('espNombreOtro');
+espNombreSelect.addEventListener('change', () => {
+  const isOtro = espNombreSelect.value === 'Otro';
+  espNombreOtroField.style.display = isOtro ? 'flex' : 'none';
+  if (!isOtro) espNombreOtro.value = '';
+});
+
+/* ---------- Especialidad: campo "Otro" ---------- */
+const espEspecialidadSelect = document.getElementById('espEspecialidadSelect');
+const espEspecialidadOtroField = document.getElementById('espEspecialidadOtroField');
+const espEspecialidadOtro = document.getElementById('espEspecialidadOtro');
+espEspecialidadSelect.addEventListener('change', () => {
+  const isOtro = espEspecialidadSelect.value === 'Otro';
+  espEspecialidadOtroField.style.display = isOtro ? 'flex' : 'none';
+  if (!isOtro) espEspecialidadOtro.value = '';
+});
+
+/* ---------- Clínica / Centro: campo "Otro" ---------- */
+const espClinicaSelect = document.getElementById('espClinicaSelect');
+const espClinicaOtroField = document.getElementById('espClinicaOtroField');
+const espClinicaOtro = document.getElementById('espClinicaOtro');
+espClinicaSelect.addEventListener('change', () => {
+  const isOtro = espClinicaSelect.value === 'Otro';
+  espClinicaOtroField.style.display = isOtro ? 'flex' : 'none';
+  if (!isOtro) espClinicaOtro.value = '';
+});
+
+/* ---------- Firma en canvas ---------- */
+function initSignaturePad(canvas) {
+  const ctx = canvas.getContext('2d');
+  const resize = () => {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0d3b3b';
+  };
+  resize();
+  let drawing = false, last = null;
+  const pos = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+  };
+  const start = (e) => { drawing = true; last = pos(e); e.preventDefault(); };
+  const move = (e) => {
+    if (!drawing) return;
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last = p; e.preventDefault();
+  };
+  const end = () => { drawing = false; };
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+  canvas._clear = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas._isEmpty = () => {
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width; blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+  };
+}
+const sigPaciente = document.getElementById('sigPaciente');
+const sigProfesional = document.getElementById('sigProfesional');
+initSignaturePad(sigPaciente);
+initSignaturePad(sigProfesional);
+document.querySelectorAll('[data-clear]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById(btn.dataset.clear)._clear();
+  });
+});
+
+/* ---------- Reset ---------- */
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (!confirm('¿Reiniciar el formulario? Se perderán los datos no guardados.')) return;
+  document.getElementById('clinicalForm').reset();
+  stressVal.textContent = '5';
+  sigPaciente._clear(); sigProfesional._clear();
+  logoData = defaultLogoData; logoImg.src = defaultLogoData; logoImg.style.display = ''; logoPlaceholder.style.display = 'none';
+  espNombreOtroField.style.display = 'none';
+  espEspecialidadOtroField.style.display = 'none';
+  espClinicaOtroField.style.display = 'none';
+  [1,2,3].forEach(n => {
+    photoData[n] = null;
+    const slot = document.querySelector(`.photo-slot[data-slot="${n}"]`);
+    slot.querySelector('img').style.display = 'none';
+    slot.querySelector('.placeholder').style.display = 'flex';
+  });
+  toast('Formulario reiniciado');
+});
+
+/* ---------- Recolección de datos ---------- */
+function collectChecked(container) {
+  return [...container.querySelectorAll('input[type=checkbox]:checked')].map(i => i.value);
+}
+function val(name) {
+  const el = document.querySelector(`[name="${name}"]`);
+  return el ? el.value : '';
+}
+function radioVal(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+
+/* ---------- Generación de PDF ---------- */
+document.getElementById('btnGenerar').addEventListener('click', async () => {
+  if (!document.getElementById('consentCheck').checked) {
+    toast('Debe aceptar el consentimiento informado antes de generar el reporte');
+    return;
+  }
+  if (sigPaciente._isEmpty() || sigProfesional._isEmpty()) {
+    toast('Faltan una o ambas firmas');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const contentW = pageW - margin * 2;
+  let y = margin;
+  const teal = [13, 59, 59];
+  const clay = [193, 105, 63];
+
+  function ensureSpace(h) {
+    if (y + h > pageH - margin) { doc.addPage(); y = margin; }
+  }
+  function heading(num, text) {
+    ensureSpace(34);
+    doc.setFillColor(...teal);
+    doc.rect(margin, y, contentW, 22, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.text(`${num}  ${text.toUpperCase()}`, margin + 8, y + 15);
+    doc.setTextColor(0,0,0);
+    y += 32;
+  }
+  function subheading(text) {
+    ensureSpace(20);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    doc.setTextColor(...clay);
+    doc.text(text, margin, y);
+    doc.setTextColor(0,0,0);
+    y += 14;
+  }
+  function row(label, value) {
+    if (!value) value = '—';
+    ensureSpace(15);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    const labelText = `${label}: `;
+    const labelW = doc.getTextWidth(labelText) + 3;
+    doc.text(labelText, margin, y);
+    doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(String(value), contentW - labelW);
+    doc.text(lines, margin + labelW, y);
+    y += lines.length * 12 + 3;
+  }
+  function paragraph(label, value) {
+    if (!value) value = '—';
+    ensureSpace(14);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text(`${label}:`, margin, y);
+    y += 12;
+    doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(String(value), contentW);
+    lines.forEach(line => { ensureSpace(12); doc.text(line, margin, y); y += 12; });
+    y += 4;
+  }
+
+  // Título
+  const logoW = 70, logoH = 40.5;
+  if (logoData) {
+    try { doc.addImage(logoData, 'JPEG', margin, y, logoW, logoH); } catch(e) {}
+  }
+  const titleX = margin + (logoData ? logoW + 14 : 0);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15);
+  doc.setTextColor(...teal);
+  doc.text('Historia Clínica', titleX, y + 18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.setTextColor(90,90,90);
+  doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, titleX, y + 33);
+  doc.setTextColor(0,0,0);
+  y += 56;
+
+  heading('01', 'Información del especialista');
+  row('Nombre', espNombreSelect.value === 'Otro' ? espNombreOtro.value : val('esp_nombre'));
+  row('Especialidad', espEspecialidadSelect.value === 'Otro' ? espEspecialidadOtro.value : val('esp_especialidad'));
+  row('Clínica / Centro', espClinicaSelect.value === 'Otro' ? espClinicaOtro.value : val('esp_clinica'));
+  row('Fecha de valoración', val('esp_fecha'));
+  row('Teléfono', val('esp_telefono'));
+  row('Correo', val('esp_correo'));
+  y += 6;
+
+  heading('02', 'Datos del paciente');
+  row('Nombre completo', val('pac_nombre'));
+  row('Edad', val('pac_edad'));
+  row('Sexo', radioVal('pac_sexo'));
+  row('Teléfono', val('pac_telefono'));
+  row('Ocupación', val('pac_ocupacion'));
+  row('Domicilio', val('pac_domicilio'));
+  y += 6;
+
+  heading('03', 'Antecedentes podológicos y médicos');
+  row('Condiciones relevantes', collectChecked(document.getElementById('condiciones')).join(', '));
+  row('Tratamiento médico actual', val('ant_tratamiento'));
+  y += 6;
+
+  heading('04', 'Estilo de vida y hábitos');
+  row('Actividad física', radioVal('vida_actividad'));
+  row('Calzado habitual', val('vida_calzado'));
+  row('Frecuencia de caminata', val('vida_caminata'));
+  row('Hábitos tóxicos', [...document.querySelectorAll('.card:nth-of-type(4) input[type=checkbox]:checked')].map(i=>i.value).join(', '));
+  row('Nivel de estrés (1-10)', stressRange.value);
+  row('Adherencia a indicaciones', val('vida_adherencia'));
+  y += 6;
+
+  const cardsExp = document.querySelectorAll('section.card');
+  function exploracionPDF(card, sfx, otrosTextoId, manos) {
+    subheading(manos ? 'Evaluación específica de manos' : 'Evaluación podológica específica');
+    const groups = card.querySelectorAll('.field.full .choice-group');
+    const otrosVal = document.getElementById(otrosTextoId).value.trim();
+    const unasSel = [...groups[0].querySelectorAll('input:checked')].map(i =>
+      i.value === 'Otros' && otrosVal ? `Otros (${otrosVal})` : i.value
+    );
+    row('Uñas', unasSel.join(', '));
+    row('Piel y tegumentos', [...groups[1].querySelectorAll('input:checked')].map(i=>i.value).join(', '));
+    subheading('Evaluación biomecánica y vascular/neurológica');
+    if (!manos) row('Marcha y postura', val('exp_marcha' + sfx));
+    row('Exploración vascular (pulsos)', val('exp_pulsos' + sfx));
+    row('Llenado capilar', val('exp_llenado' + sfx));
+    row(manos ? 'Temperatura de la mano' : 'Temperatura del pie', val('exp_temperatura' + sfx));
+    row('Exploración neurológica', val('exp_neuro' + sfx));
+    row('Lado(s) afectado(s)', val('exp_lado' + sfx));
+    paragraph('Observaciones adicionales', val('exp_observaciones' + sfx));
+  }
+
+  heading('05', 'Exploración clínica podológica');
+  exploracionPDF(cardsExp[4], '', 'unasOtrosTexto');
+
+  heading('06', 'Exploración clínica de manos');
+  exploracionPDF(cardsExp[5], '_manos', 'unasManosOtrosTexto', true);
+
+  heading('07', 'Plan de tratamiento sugerido');
+  paragraph('Higiene del pie', val('plan_higiene'));
+  paragraph('Corte y cuidado de uñas', val('plan_unas'));
+  paragraph('Tratamientos antimicóticos', val('plan_antimicotico'));
+  paragraph('Órtesis / calzado especial', val('plan_ortesis'));
+  row('Próxima cita', val('plan_seguimiento'));
+
+  heading('08', 'Fotografía clínica');
+  paragraph('Comentarios', val('foto_comentarios'));
+  const photoW = (contentW - 20) / 3;
+  const photoH = photoW * 0.75;
+  ensureSpace(photoH + 10);
+  [1,2,3].forEach((n,i) => {
+    const x = margin + i * (photoW + 10);
+    if (photoData[n]) {
+      try { doc.addImage(photoData[n], 'JPEG', x, y, photoW, photoH); } catch(e){}
+    } else {
+      doc.setDrawColor(200); doc.rect(x, y, photoW, photoH);
+      doc.setFontSize(8); doc.setTextColor(150);
+      doc.text('Sin imagen', x + photoW/2 - 16, y + photoH/2);
+      doc.setTextColor(0);
+    }
+  });
+  y += photoH + 20;
+
+  heading('09', 'Consentimiento informado');
+  paragraph('Declaración', 'El paciente otorgó su consentimiento para la valoración, diagnóstico, tratamiento podológico y toma de fotografías clínicas. Ha recibido explicación de su condición y plan de tratamiento, aceptando riesgos y beneficios.');
+  row('Consentimiento aceptado', 'Sí');
+
+  heading('10', 'Firmas de conformidad');
+  ensureSpace(100);
+  const sigW = (contentW - 20) / 2;
+  const sigH = 70;
+  try { doc.addImage(sigPaciente.toDataURL('image/png'), 'PNG', margin, y, sigW, sigH); } catch(e){}
+  try { doc.addImage(sigProfesional.toDataURL('image/png'), 'PNG', margin + sigW + 20, y, sigW, sigH); } catch(e){}
+  y += sigH + 4;
+  doc.setDrawColor(180);
+  doc.line(margin, y, margin + sigW, y);
+  doc.line(margin + sigW + 20, y, margin + sigW*2 + 20, y);
+  y += 12;
+  doc.setFontSize(8.5); doc.setTextColor(90);
+  doc.text('Firma del paciente o responsable', margin, y);
+  doc.text('Firma del profesional tratante', margin + sigW + 20, y);
+
+  // Pie de página numerado
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setTextColor(150);
+    doc.text(`Página ${i} de ${pageCount}`, pageW - margin - 60, pageH - 24);
+  }
+
+  const nombrePaciente = val('pac_nombre').trim().replace(/\s+/g,'_') || 'paciente';
+  const filename = `Historia_Clinica_${nombrePaciente}.pdf`;
+  const pdfBlob = doc.output('blob');
+  const downloads = (window.claude && typeof window.claude.use === 'function')
+    ? await window.claude.use('downloads')
+    : null;
+  if (downloads) {
+    try {
+      await downloads.save({ filename, data: pdfBlob });
+      toast('Reporte generado correctamente');
+    } catch (err) {
+      if (err && err.code === 'declined') {
+        toast('Descarga cancelada');
+      } else {
+        toast('No se pudo guardar el PDF');
+      }
+    }
+  } else {
+    doc.save(filename);
+    toast('Reporte generado correctamente');
+  }
+});
+</script>
+</body>
+</html>
